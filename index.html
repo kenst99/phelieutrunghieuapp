@@ -2131,7 +2131,7 @@ function animateMountains() {
 // KPI & SUMMARY
 // ================================================================
 const fmtKg=(n)=>{const v=Number(n)||0;return v>0?v.toLocaleString('vi-VN'):'–';};
-const fmtVon=(n)=>{const v=Number(n)||0;return v>0?v.toLocaleString('vi-VN')+'M':'–';};
+const fmtVon=(n)=>{const v=Number(n)||0;return v>0?v.toLocaleString('vi-VN'):'–';};
 function updateKPIDisplay(){
     Object.entries(tonData).forEach(([k,d])=>{
       const el=document.getElementById('kv-'+k);
@@ -2144,7 +2144,7 @@ function updateSummary(){
   const kl=Object.values(tonData).reduce((a,d)=>a+d.kl,0);
   const v=Object.values(tonData).reduce((a,d)=>a+d.von,0);
   const klEl=document.getElementById('total-kl');if(klEl)klEl.innerHTML=fmtKg(kl)+'<span class="sum-unit">kg</span>';
-  const vEl=document.getElementById('total-von');if(vEl)vEl.innerHTML=(v>0?v.toLocaleString('vi-VN')+'M':'–')+'<span class="sum-unit">VNĐ</span>';
+  const vEl=document.getElementById('total-von');if(vEl)vEl.innerHTML=(v>0?v.toLocaleString('vi-VN'):'–')+'<span class="sum-unit">VNĐ</span>';
   updateGTHT();computeSpeed3d();
 }
 function updateGTHT(){
@@ -2333,13 +2333,13 @@ async function baoCaoTon(){
     cx.beginPath();cx.arc(32,y+lH/2,5,0,Math.PI*2);cx.fillStyle=r.color;cx.fill();
     cx.textAlign='left';cx.fillStyle='#E8DDD0';cx.font='bold 16px Barlow Condensed,Arial';cx.fillText(r.label,54,y+19);
   cx.fillStyle='#fff';cx.font='bold 20px Barlow Condensed,Arial';cx.fillText(fmtKg(d.kl)+' kg',54,y+44);
-    cx.textAlign='center';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Vốn mua',305,y+17);cx.fillStyle='#CD7F32';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(d.von>0?d.von+'M đ':'–',305,y+38);
+    cx.textAlign='center';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Vốn mua',305,y+17);cx.fillStyle='#CD7F32';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(d.von>0?d.von+' đ':'–',305,y+38);
     cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Giá TT',465,y+17);cx.fillStyle=g>0?'#fff':'rgba(255,255,255,0.3)';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(g>0?fmt(g)+' đ/kg':'—',465,y+38);
     cx.textAlign='right';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Giá trị HT',W-pad,y+17);cx.fillStyle=gtht?'#4ade80':'rgba(255,255,255,0.3)';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(gtht?fmt(gtht)+' đ':'—',W-pad,y+38);
   });
   const fy=hH+rws.length*lH;const fg=cx.createLinearGradient(0,fy,0,fy+fH);fg.addColorStop(0,'#1a1008');fg.addColorStop(1,'#0d0804');cx.fillStyle=fg;cx.fillRect(0,fy,W,fH);
   cx.fillStyle='rgba(183,65,14,0.35)';cx.fillRect(0,fy,W,1);
-  cx.textAlign='left';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='11px Barlow,Arial';cx.fillText('Tổng vốn đã mua:',pad,fy+28);cx.fillStyle='#CD7F32';cx.font='bold 20px Barlow Condensed,Arial';cx.fillText(totalVon>0?totalVon.toLocaleString('vi-VN')+'M VNĐ':'–',pad,fy+52);
+  cx.textAlign='left';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='11px Barlow,Arial';cx.fillText('Tổng vốn đã mua:',pad,fy+28);cx.fillStyle='#CD7F32';cx.font='bold 20px Barlow Condensed,Arial';cx.fillText(totalVon>0?totalVon.toLocaleString('vi-VN')+' VNĐ':'–',pad,fy+52);
   const tgt=rws.reduce((s,r)=>{const g=gMap[r.key];return s+(g>0?tonData[r.key].kl*g:0);},0);
   cx.textAlign='right';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='11px Barlow,Arial';cx.fillText('Tổng giá trị hiện tại:',W-pad,fy+28);cx.fillStyle=tgt>0?'#4ade80':'rgba(255,255,255,0.3)';cx.font='bold 20px Barlow Condensed,Arial';cx.fillText(tgt>0?fmt(tgt)+' đ':'— (chưa nhập giá)',W-pad,fy+52);
   cx.textAlign='center';cx.fillStyle='rgba(183,65,14,0.4)';cx.font='10px Barlow,Arial';cx.fillText('Hệ Thống Quản Lý Phế Liệu – CTY TRUNG HIẾU',W/2,fy+82);
