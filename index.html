@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Trung Hiếu">
-<meta name="theme-color" content="#1C1408">
-<meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
 <title>CTY TRUNG HIẾU – Phế Liệu</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2155,14 +2150,8 @@ function updateGTHT(){
   if(v>0)localStorage.setItem('th_gia_tt',JSON.stringify({sat:gs,tole:gt,lon:gl,sac:gd}));
 }
 function computeSpeed3d(){
-  try{
-    const rows=JSON.parse(localStorage.getItem('bangke_log_v1')||'[]');
-    if(!rows.length){document.getElementById('speed-3d').innerHTML='–<span class="sum-unit">kg/ngày</span>';return;}
-    const bd={};rows.forEach(r=>{const d=r[1]?String(r[1]).trim():'';if(!d)return;const kl=typeof r[12]==='number'?r[12]:0;bd[d]=(bd[d]||0)+kl;});
-    const days=Object.keys(bd).sort((a,b)=>{const pa=a.split('/'),pb=b.split('/');return new Date(+(pa[2]||2024),+pa[1]-1,+pa[0])-new Date(+(pb[2]||2024),+pb[1]-1,+pb[0]);});
-    const l3=days.slice(-3),sum=l3.reduce((s,d)=>s+(bd[d]||0),0);
-    document.getElementById('speed-3d').innerHTML=(l3.length>0?Math.round(sum/l3.length).toLocaleString('vi-VN'):'–')+'<span class="sum-unit">kg/ngày</span>';
-  }catch(e){}
+  // Dữ liệu được lấy từ sheet LỌC!Q:R trong doSync()
+  // Hàm này giữ lại để tránh lỗi nếu có nơi gọi
 }
 
 // ================================================================
@@ -2333,7 +2322,7 @@ async function baoCaoTon(){
     cx.beginPath();cx.arc(32,y+lH/2,5,0,Math.PI*2);cx.fillStyle=r.color;cx.fill();
     cx.textAlign='left';cx.fillStyle='#E8DDD0';cx.font='bold 16px Barlow Condensed,Arial';cx.fillText(r.label,54,y+19);
   cx.fillStyle='#fff';cx.font='bold 20px Barlow Condensed,Arial';cx.fillText(fmtKg(d.kl)+' kg',54,y+44);
-    cx.textAlign='center';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Vốn mua',305,y+17);cx.fillStyle='#CD7F32';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(d.von>0?d.von+' đ':'–',305,y+38);
+    cx.textAlign='center';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Vốn mua',305,y+17);cx.fillStyle='#CD7F32';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(d.von>0?Number(d.von).toLocaleString('vi-VN')+' đ':'–',305,y+38);
     cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Giá TT',465,y+17);cx.fillStyle=g>0?'#fff':'rgba(255,255,255,0.3)';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(g>0?fmt(g)+' đ/kg':'—',465,y+38);
     cx.textAlign='right';cx.fillStyle='rgba(232,217,208,0.5)';cx.font='10px Barlow,Arial';cx.fillText('Giá trị HT',W-pad,y+17);cx.fillStyle=gtht?'#4ade80':'rgba(255,255,255,0.3)';cx.font='bold 13px Barlow Condensed,Arial';cx.fillText(gtht?fmt(gtht)+' đ':'—',W-pad,y+38);
   });
@@ -2497,6 +2486,8 @@ async function doSync(){
     // Update tonData (values from sheet are in kg)
     tonData.sat.kl=sat;tonData.tole.kl=tole;tonData.lon.kl=lon;tonData.sac.kl=sacDac;
     tonData.sat.von=vonSat;tonData.tole.von=vonTole;tonData.lon.von=vonLon;tonData.sac.von=vonSac;
+    // Lưu vào localStorage để lần sau mở app hiển thị đúng
+    try{localStorage.setItem('th_ton_data',JSON.stringify(tonData));}catch(e){}
     
     // Update KPI display
     updateKPIDisplay();updateSummary();animateMountains();
@@ -2509,7 +2500,25 @@ async function doSync(){
     const msg='✅ Đồng bộ thành công lúc '+ts+'\n• Sắt: '+fmtKg(sat)+' kg  • Tole: '+fmtKg(tole)+' kg  • Lon: '+fmtKg(lon)+' kg  • Sắt Đặc: '+fmtKg(sacDac)+' kg  | Tổng: '+fmtKg(tongTon)+' kg';
     showSyncResult('✅ '+ts+' — Sắt: '+fmtKg(sat)+' kg · Tole: '+fmtKg(tole)+' kg · Lon: '+fmtKg(lon)+' kg · Sắt Đặc: '+fmtKg(sacDac)+' kg');
     appToast('✓ Đồng bộ OK! Tổng tồn: '+fmtKg(tongTon)+' kg');
-    computeSpeed3d();
+    // Tốc độ TB 3 ngày — đọc từ result.loc trả về bởi Apps Script
+    try{
+      const parseNum2=(v)=>{if(!v&&v!==0)return null;if(typeof v==='number')return isFinite(v)?v:null;const s=String(v).trim().replace(/[^\d.,]/g,'');if(!s)return null;const hasDot=s.includes('.');const hasComma=s.includes(',');let n;if(hasDot&&hasComma){n=parseFloat(s.replace(/\./g,'').replace(',','.'));}else if(hasComma){n=parseFloat(s.replace(/,/g,'.'));}else if(hasDot){const m=s.match(/\.(\d{1,2})$/);n=parseFloat(m?s:s.replace(/\./g,''));}else n=parseFloat(s);return isNaN(n)?null:n;};
+      let locRows=null;
+      if(json.loc&&Array.isArray(json.loc))locRows=json.loc;
+      if(locRows&&locRows.length){
+        // Lọc dòng có ngày và KL > 0
+        const valid=locRows.filter(r=>r&&r[0]&&String(r[0]).trim()&&r[1]!==undefined&&r[1]!==null&&r[1]!=='');
+        const last3=[];
+        for(let i=valid.length-1;i>=0&&last3.length<3;i--){
+          const kl=parseNum2(valid[i][1]);
+          if(kl!==null&&kl>0)last3.unshift(kl);
+        }
+        if(last3.length){
+          const avg=Math.round(last3.reduce((s,v)=>s+v,0)/last3.length);
+          document.getElementById('speed-3d').innerHTML=avg.toLocaleString('vi-VN')+'<span class="sum-unit">kg/ngày</span>';
+        }
+      }
+    }catch(e){console.warn('Speed3d loc error:',e);}
     
   }catch(err){
     dot.className='sync-dot';btn.classList.remove('syncing');
@@ -2545,6 +2554,8 @@ function appToast(msg){const t=document.getElementById('appToast');t.textContent
   // Initial state: NXT nav active, tabs visible
   _activeBottomNav='nxt';updateHeaderTabs();
   animateMountains();updateSummary();startAutoSync();
+  // Đồng bộ ngay khi mở app (không chờ 5 phút)
+  if(localStorage.getItem('th_sheet'))doSync();
 })();
 
 // ================================================================
@@ -2602,7 +2613,7 @@ function appToast(msg){const t=document.getElementById('appToast');t.textContent
     xStock.sat  = tonData.sat.kl  || 0;
     xStock.tole = tonData.tole.kl || 0;
     xStock.lon  = tonData.lon.kl  || 0;
-    xStock.sac  = tonData.sac.kl  || 0;
+    xStock.sac  = p  || 0;
 
     // Giá vốn = tonData.*.von (đơn vị M VNĐ → convert sang đ/kg nếu cần)
     // tonData.von lưu dạng M (triệu), chia cho kl để ra đ/kg
@@ -3722,13 +3733,6 @@ function appToast(msg){const t=document.getElementById('appToast');t.textContent
       });
     });
   };
-
-  // ── PWA Service Worker ──
-  if('serviceWorker' in navigator){
-    window.addEventListener('load',function(){
-      navigator.serviceWorker.register('sw.js').catch(function(){});
-    });
-  }
 
   // Keyboard ESC support
   document.addEventListener('keydown',function(e){
